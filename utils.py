@@ -35,9 +35,6 @@ def draw_pass_map(df, selected_player):
                      lw=5, transparent=True, comet=True, label='Crosses',
                      color='#6cff2d', ax=ax)
 
-    st.write(f"Length of pass df: {len(pass_df)}")
-    st.write(f"Length of dribble df: {len(dribble_df)}")
-    st.write(f"Length of cross df: {len(cross_df)}")
     ax.legend(facecolor='#22312b', edgecolor='None', fontsize=20, loc='upper left', handlelength=4)
 
     ax_title = ax.set_title(f'{selected_player} pass map', fontsize=30)
