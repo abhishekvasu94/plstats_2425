@@ -175,8 +175,10 @@ def get_score(df_events, home_team, away_team):
 
     goals_df = df_events[(df_events["type_name"].isin(["shot", "shot_penalty", "shot_freekick"])) & (df_events["result_name"] == "success")]
 
-    home_goals = len(goals_df[goals_df["team"] == home_team])
-    away_goals = len(goals_df[goals_df["team"] == away_team])
+    owngoals_df = df_events[df_events["result_name"] == "owngoal"]
+
+    home_goals = len(goals_df[goals_df["team"] == home_team]) + len(owngoals_df[owngoals_df["team"] == away_team])
+    away_goals = len(goals_df[goals_df["team"] == away_team]) + len(owngoals_df[owngoals_df["team"] == home_team])
 
     text_string = f"{home_team} {home_goals} - {away_goals} {away_team}"
     
@@ -263,11 +265,8 @@ if submit_button:
 
         if len(df_game_events) == 0:
             st.write("This game has not been played yet this season")
-            st.write(f"Game id: {game_id}")
 
         else:
-
-            st.write(f"The game id is {game_id}")
 
             get_score(df_game_events, home_team, away_team)
 
