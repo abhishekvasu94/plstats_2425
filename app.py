@@ -4,6 +4,8 @@ import streamlit as st
 from matplotlib import pyplot as plt
 import socceraction.spadl.utils as spu
 from PIL import Image
+from google.oauth2 import service_account
+from google.cloud import bigquery
 
 from mplsoccer import VerticalPitch, Pitch
 
@@ -90,7 +92,8 @@ def load_data(filename):
 
 def plot_stats(df, home_team, away_team):
 
-    columns = ['Ball possession', 'Big chances', 'Big chances missed', 'Corners', 'Expected goals (xG)', 'Fouls committed', 'Shots on target', 'Total shots', 'Accurate passes (%)']
+    # columns = ['Ball possession', 'Big chances', 'Big chances missed', 'Corners', 'Expected goals (xG)', 'Fouls committed', 'Shots on target', 'Total shots', 'Accurate passes (%)']
+    columns = ['ball_possession', 'big_chances', 'big_chances_missed', 'corners', 'expected_goals', 'fouls_committed', 'shots_on_target', 'total_shots','accurate_passes_percentage']
 
     home_df = df[df["team"] == ws_us_mapping[home_team]]
     away_df = df[df["team"] == ws_us_mapping[away_team]]
@@ -110,10 +113,16 @@ def plot_stats(df, home_team, away_team):
         val_1 = home_df[col].values[0]
         val_2 = away_df[col].values[0]
 
+        if 'percentage' in col:
+            val_1 *= 100
+            val_2 *= 100
+
         first_val = val_1 / (val_1 + val_2)
         second_val = val_2 / (val_1 + val_2)
 
-        ax.text(0.5, idx * 2 + 0.8, col, ha='center', weight="bold", color='#9836EB')
+        field_name = col.replace("_", " ").replace("percentage", "(%)").capitalize()
+
+        ax.text(0.5, idx * 2 + 0.8, field_name, ha='center', weight="bold", color='#9836EB')
         ax.barh(idx * 2, first_val, color='red', label='Team 1', alpha=0.5)
         if val_1 != 0:
             ax.text(first_val / 2, idx * 2 - 0.15, str(round(val_1, 2)), weight="bold", ha='center', color="#967D54")
@@ -221,12 +230,16 @@ def render_player_graphs(df):
 
 st.title("Premier league 24/25 season")
 
+# Create API client.
+credentials = service_account.Credentials.from_service_account_info(
+    st.secrets["gcp_service_account"]
+)
+client = bigquery.Client(credentials=credentials)
+
 df_fixtures = load_data("./data/fixtures_2425.csv")
 df_home_team = load_data("./data/home_team_data_latest_2425.csv")
-df_event_data = spu.add_names(load_data("./data/event_data_latest_2425.csv"))
-df_all_match_stats = load_data("./data/match_stats_latest_2425.csv")
 
-teams = sorted(df_event_data["team"].unique())
+teams = sorted(list(team_id_dict.keys()))
 
 with st.form(key="my-form"):
     home_team = st.selectbox(
@@ -257,9 +270,21 @@ if submit_button:
                 (df_fixtures["away_team"] == ws_fx_mapping[away_team])]["game_id"].values[0]
 
         query_string = ws_us_mapping[home_team] + "-" + ws_us_mapping[away_team]
-        df_match_stats = df_all_match_stats[df_all_match_stats["game"].str.contains(query_string)]
 
-        df_game_events = df_event_data[df_event_data["game_id"] == game_id]
+        match_stats_sql = f"""
+            SELECT *
+            FROM `match_stats.match_stats`
+            WHERE game LIKE '%{query_string}%'
+        """
+        df_match_stats = client.query(match_stats_sql).to_dataframe()
+
+        event_data_sql = f"""
+            SELECT *
+            FROM `events_data.event_data`
+            WHERE game_id={game_id}
+        """
+        df_game_events = client.query(event_data_sql).to_dataframe()
+        df_game_events = spu.add_names(df_game_events)
 
         df_game_events = spu.play_left_to_right(df_game_events, team_id_dict[home_team])
 
@@ -276,8 +301,6 @@ if submit_button:
 
             plot_progressive_passes(df_game_events, away_team)
 
-            # plot_progressive_passes(df_game_events, away_team, is_away_team=True)
-            
             plot_danger_shots(df_game_events, home_team)
 
             plot_danger_shots(df_game_events, away_team)
