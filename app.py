@@ -9,7 +9,7 @@ from google.cloud import bigquery
 
 from mplsoccer import VerticalPitch, Pitch
 
-from utils import draw_pass_map, change_label_style
+from utils import draw_pass_map, draw_heat_map
 from passes import get_progressive_passes
 from shots import plot_danger_shots
 
@@ -222,9 +222,14 @@ def render_player_graphs(df):
     if submit_button:
         st.write(f"The selected player is {selected_player}")
 
-        rendered_fig = draw_pass_map(df, selected_player)
-        if rendered_fig:
-            st.pyplot(rendered_fig)
+        rendered_pass_map = draw_pass_map(df, selected_player)
+        rendered_heat_map = draw_heat_map(df, selected_player)
+
+        if rendered_pass_map:
+            st.pyplot(rendered_pass_map)
+
+        if rendered_heat_map:
+            st.pyplot(rendered_heat_map)
 
     return None
 
