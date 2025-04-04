@@ -166,7 +166,7 @@ def plot_progressive_passes(df, team_name, is_away_team=False):
     team_name_file = f"./data/logos/{team_name}-logo.png"
 
     pitch_prog_pass = Pitch(line_color='black', pitch_type = "custom", pitch_length=105, pitch_width=68)
-    fig, ax = pitch_prog_pass.draw()
+    fig, ax = pitch_prog_pass.draw(figsize=(16, 11), constrained_layout=False, tight_layout=True)
 
     pitch_prog_pass.scatter(x_start, y_start, alpha = 0.2, s = 50, color = "blue", ax=ax)
     pitch_prog_pass.arrows(x_start, y_start, x_end, y_end, color = "blue", ax=ax, width=1)

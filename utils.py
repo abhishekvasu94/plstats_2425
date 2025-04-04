@@ -9,31 +9,17 @@ from mplsoccer import Pitch, VerticalPitch, FontManager, Sbopen
 
 def draw_pass_map(df, selected_player):
 
-    # rcParams['text.color'] = '#c7d5cc'
-
-    # pitch = Pitch(pitch_type='statsbomb', pitch_color='#22312b', line_color='#c7d5cc')
-    pitch = Pitch(pitch_type='custom', pitch_length=105, pitch_width=68)
-    fig, ax = pitch.draw(figsize=(16, 11), constrained_layout=False, tight_layout=True)
-    # fig.set_facecolor('#22312b')
-
     pass_df = df[(df["type_name"] == "pass") & (df["player"] == selected_player)]
 
-    lc1 = pitch.lines(pass_df.start_x, pass_df.start_y,
-                      pass_df.end_x, pass_df.end_y,
-                      lw=5, transparent=True, comet=True, label='Passes',
-                      color='#ad993c', ax=ax)
+    pitch = Pitch(line_color='black', pitch_type = "custom", pitch_length=105, pitch_width=68)
+    fig, ax = pitch.draw(figsize=(16, 11), constrained_layout=False, tight_layout=True)
 
-    dribble_df = df[(df["type_name"] == "dribble") & (df["player"] == selected_player)]
-    lc2 = pitch.lines(dribble_df.start_x, dribble_df.start_y,
-                      dribble_df.end_x, dribble_df.end_y,
-                      lw=5, transparent=True, comet=True, label='Dribbles',
-                      color='#ba4f45', ax=ax)
+    success_passes = pass_df[pass_df["result_name"] == "success"]
+    failed_passes = pass_df[pass_df["result_name"] == "fail"]
 
-    cross_df = df[(df["type_name"] == "cross") & (df["player"] == selected_player)]
-    lc3 = pitch.lines(cross_df.start_x, cross_df.start_y,
-                     cross_df.end_x, cross_df.end_y,
-                     lw=5, transparent=True, comet=True, label='Crosses',
-                     color='#6cff2d', ax=ax)
+    pitch.scatter(pass_df.start_x, pass_df.start_y, alpha = 0.2, s = 50, color = "blue", ax=ax)
+    pitch.arrows(success_passes.start_x, success_passes.start_y, success_passes.end_x, success_passes.end_y, label="success", color = "green", ax=ax, width=1)
+    pitch.arrows(failed_passes.start_x, failed_passes.start_y, failed_passes.end_x, failed_passes.end_y, label="fail", color = "red", ax=ax, width=1)
 
     ax.legend(facecolor='#22312b', edgecolor='None', fontsize=20, loc='upper left', handlelength=4)
 
