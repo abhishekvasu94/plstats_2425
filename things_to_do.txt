@@ -1,6 +1,5 @@
 Things left to do
 
-* Implement match stats graph
-* Implement player level stats - shot map, pass map, dribble map, high xT
 * Automate pulling of new data
-* Deploy
+* Show lineup
+* Fix pass network with less than 11 men

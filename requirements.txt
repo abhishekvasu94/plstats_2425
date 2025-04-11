@@ -4,3 +4,4 @@ streamlit==1.40.0
 socceraction==1.4.2
 google-cloud-bigquery[pandas]==3.30.0
 google-cloud-storage
+psycopg2
