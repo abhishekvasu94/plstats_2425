@@ -11,7 +11,7 @@ from network import process_pass_data
 
 def plot_stats(df, home_team, away_team):
 
-    columns = ['ball_possession', 'big_chances', 'big_chances_missed', 'corners', 'expected_goals', 'fouls_committed', 'shots_on_target', 'total_shots','accurate_passes_percentage']
+    columns = ['ball_possession', 'big_chances', 'big_chances_missed', 'corners', 'expected_goals', 'fouls_committed', 'shots_on_target', 'total_shots','accurate_passes_pct']
 
     home_df = df[df["team"] == ws_us_mapping[home_team]]
     away_df = df[df["team"] == ws_us_mapping[away_team]]
@@ -38,7 +38,7 @@ def plot_stats(df, home_team, away_team):
         first_val = val_1 / (val_1 + val_2)
         second_val = val_2 / (val_1 + val_2)
 
-        field_name = col.replace("_", " ").replace("percentage", "(%)").capitalize()
+        field_name = col.replace("_", " ").replace("pct", "(%)").capitalize()
 
         ax.text(0.5, idx * 2 + 0.8, field_name, ha='center', weight="bold", color='#9836EB')
         ax.barh(idx * 2, first_val, color='red', label='Team 1', alpha=0.5)
