@@ -6,14 +6,14 @@ from matplotlib import pyplot as plt
 import socceraction.spadl.utils as spu
 from socceraction.spadl.opta import convert_to_actions
 from PIL import Image
-from google.oauth2 import service_account
-from google.cloud import bigquery, storage
+import boto3
 
 from mplsoccer import VerticalPitch, Pitch
 
 from config import *
 from plotting import plot_stats, plot_progressive_passes, plot_danger_shots, plot_pass_network
 from utils import draw_pass_map, draw_heat_map
+from database import FootballDB, download_from_s3
 
 
 @st.cache_data
@@ -70,13 +70,16 @@ def render_player_graphs(df):
 
 st.title("Premier league 24/25 season")
 
-# Create API client.
-credentials = service_account.Credentials.from_service_account_info(
-    st.secrets["gcp_service_account"]
-)
-bq_client = bigquery.Client(credentials=credentials)
-storage_client = storage.Client(credentials=credentials)
-bucket = storage_client.get_bucket("abhishek-storage-bucket")
+aws_params = st.secrets['aws_params']
+s3_client = boto3.client(
+        's3',
+        **aws_params
+        )
+bucket_name = "abhishek-data-bucket"
+
+db_params = st.secrets["db_params"]
+my_db = FootballDB(db_params)
+
 df_fixtures = load_data("./data/fixtures_2425.csv")
 df_home_team = load_data("./data/home_team_data_latest_2425.csv")
 
@@ -113,26 +116,27 @@ if submit_button:
         query_string = ws_us_mapping[home_team] + "-" + ws_us_mapping[away_team]
 
         match_stats_sql = f"""
-            SELECT *
-            FROM `match_stats.match_stats`
-            WHERE game LIKE '%{query_string}%'
+        SELECT *
+        FROM match_stats
+        WHERE game LIKE '%{query_string}%'
         """
-        df_match_stats = bq_client.query(match_stats_sql).to_dataframe()
-
         event_data_detail_sql = f"""
-            SELECT *
-            FROM `event_data_detail.event_data_detail`
-            WHERE game_id={game_id}
+        SELECT *
+        FROM event_data_detail
+        WHERE game_id={game_id}
         """
 
         event_data_spadl_sql = f"""
-            SELECT *
-            FROM `events_data.event_data`
-            WHERE game_id={game_id}
+        SELECT *
+        FROM event_data
+        WHERE game_id={game_id}
         """
-        df_game_events_detail = bq_client.query(event_data_detail_sql).to_dataframe()
 
-        df_game_events = bq_client.query(event_data_spadl_sql).to_dataframe()
+        # df_match_stats = bq_client.query(match_stats_sql).to_dataframe()
+        df_match_stats = my_db.read_from_db(match_stats_sql)
+        df_game_events_detail = my_db.read_from_db(event_data_detail_sql)
+        df_game_events = my_db.read_from_db(event_data_spadl_sql)
+
         df_game_events = spu.add_names(df_game_events)
 
         df_game_events = spu.play_left_to_right(df_game_events, team_id_dict[home_team])
@@ -142,9 +146,8 @@ if submit_button:
 
         else:
 
-            game_file = f"football_dashboard/jsons/{game_id}.json"
-            blob = bucket.blob(game_file)
-            json_data = json.loads(blob.download_as_string(client=None))
+            game_file = f"football_data/jsons/{game_id}.json"
+            json_data = download_from_s3(s3_client, bucket_name, game_file)
 
             get_score(json_data['score'], home_team, away_team)
 
