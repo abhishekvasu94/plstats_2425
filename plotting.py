@@ -31,7 +31,7 @@ def plot_stats(df, home_team, away_team):
         val_1 = home_df[col].values[0]
         val_2 = away_df[col].values[0]
 
-        if 'percentage' in col:
+        if 'pct' in col:
             val_1 *= 100
             val_2 *= 100
 

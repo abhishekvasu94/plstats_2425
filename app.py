@@ -85,6 +85,7 @@ df_home_team = load_data("./data/home_team_data_latest_2425.csv")
 
 teams = sorted(list(team_id_dict.keys()))
 
+
 with st.form(key="my-form"):
     home_team = st.selectbox(
             "Home team",
