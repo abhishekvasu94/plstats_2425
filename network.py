@@ -15,6 +15,8 @@ def process_pass_data(df, json_data, is_home):
 
     max_interval = 0
 
+    df = df.sort_values(by=['minute', 'second']).reset_index()
+
     type_list = ['Pass', 'KeeperPickup', 'Tackle', 'BallTouch', 'BallRecovery', 'Challenge', 'Goal']
 
     for interval in metadata["formations"]:
@@ -49,7 +51,7 @@ def process_pass_data(df, json_data, is_home):
     pass_between= pass_between.merge(average_locations,left_on='player_id', right_on="player_id")
     pass_between= pass_between.merge(average_locations,left_on='recipient_player_id',right_on="player_id",suffixes=['','_end'])
 
-    if end_interval - start_interval > 60:
+    if end_interval - start_interval > 45:
         pass_between = pass_between[pass_between['pass_count']>2]
 
     return pass_between, average_locations
