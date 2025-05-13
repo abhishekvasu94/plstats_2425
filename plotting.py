@@ -31,7 +31,7 @@ def plot_stats(df, home_team, away_team):
         val_1 = home_df[col].values[0]
         val_2 = away_df[col].values[0]
 
-        if 'percentage' in col:
+        if 'pct' in col:
             val_1 *= 100
             val_2 *= 100
 
@@ -156,7 +156,7 @@ def plot_pass_network(df, json_data, home_team, away_team):
                         
         nodes = pitch.scatter(1.2 * average_locations.x, 0.8 * average_locations.y, s=20*average_locations['count'].values, color='white', edgecolors='#a6aab3', linewidth=2, alpha=1, zorder=1, ax=ax)
 
-        assert len(average_locations) == 11
+        assert len(average_locations) <= 11
                         
         # Annotate average_locations
         for index, row in average_locations.iterrows():

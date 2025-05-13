@@ -15,6 +15,8 @@ def process_pass_data(df, json_data, is_home):
 
     max_interval = 0
 
+    df = df.sort_values(by=['minute', 'second']).reset_index()
+
     type_list = ['Pass', 'KeeperPickup', 'Tackle', 'BallTouch', 'BallRecovery', 'Challenge', 'Goal']
 
     for interval in metadata["formations"]:
@@ -25,7 +27,12 @@ def process_pass_data(df, json_data, is_home):
 
     loc_data = df[(df["team_id"] == teamId) & (df["type"].isin(type_list)) & (df["expanded_minute"] > start_interval) & (df["expanded_minute"] < end_interval)]
     pass_data = loc_data[loc_data["type"] == "Pass"]
-    df_recipient = df.loc[df.index.intersection(pass_data.index + 1)]
+
+    pass_indices = pass_data.index
+    valid_recipient_indices = [i+1 for i in pass_indices if i+1 in df.index]
+    df_recipient = df.loc[valid_recipient_indices]
+
+    assert len(df_recipient) == len(pass_data)
 
     pass_data["recipient_player"] = df_recipient["player"].values
     pass_data["recipient_player_id"] = df_recipient["player_id"].values
@@ -44,6 +51,7 @@ def process_pass_data(df, json_data, is_home):
     pass_between= pass_between.merge(average_locations,left_on='player_id', right_on="player_id")
     pass_between= pass_between.merge(average_locations,left_on='recipient_player_id',right_on="player_id",suffixes=['','_end'])
 
-    pass_between = pass_between[pass_between['pass_count']>3]
+    if end_interval - start_interval > 45:
+        pass_between = pass_between[pass_between['pass_count']>2]
 
     return pass_between, average_locations
